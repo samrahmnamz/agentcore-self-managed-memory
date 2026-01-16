@@ -55,7 +55,7 @@ def update_lambda_code(memory_id=None):
             ], check=True)
             
             # Read lambda function code
-            with open('lambda_function.py', 'r') as f:
+            with open('functions/memory_processor/app.py', 'r') as f:
                 code_content = f.read()
             
             # Write lambda code to temp directory

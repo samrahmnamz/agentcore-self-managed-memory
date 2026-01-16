@@ -1,4 +1,4 @@
-.PHONY: help deploy-infra create-memory update-lambda clean dev test update-lambda-code get-stack-outputs list-memories setup-env
+.PHONY: help install deploy-infra create-memory update-lambda clean dev test update-lambda-code get-stack-outputs list-memories setup-env
 
 # Configuration
 MEMORY_EXEC_ROLE_ARN := arn:aws:iam::084375560447:role/agentcore-memory-role
@@ -9,10 +9,13 @@ help:
 	@echo "=========================="
 	@echo ""
 	@echo "Prerequisites:"
-	@echo "  1. Create memory execution role manually with proper permissions"
-	@echo "  2. Set MEMORY_EXEC_ROLE_ARN environment variable"
+	@echo "  1. Python 3.10+ environment (conda/venv)"
+	@echo "  2. Run 'make install' to install dependencies"
+	@echo "  3. Create memory execution role manually with proper permissions"
+	@echo "  4. Set MEMORY_EXEC_ROLE_ARN environment variable"
 	@echo ""
 	@echo "Targets:"
+	@echo "  install       - Install project dependencies"
 	@echo "  deploy-infra  - Deploy CloudFormation infrastructure"
 	@echo "  get-stack-outputs - Get CloudFormation outputs and set env vars"
 	@echo "  list-memories - List existing memories"
@@ -25,10 +28,20 @@ help:
 	@echo "  clean         - Delete CloudFormation stack"
 	@echo "  all           - Run complete deployment (infra + memory)"
 
+# Install dependencies
+install:
+	@echo "Installing project dependencies..."
+	pip install -e .
+	@echo "✓ Dependencies installed"
+	@echo "Verifying agentcore CLI..."
+	@which agentcore && agentcore --version || echo "⚠️  agentcore not found. Try: hash -r"
+	@echo "Verifying agentcore CLI..."
+	@which agentcore || echo "⚠️  agentcore not in PATH. You may need to restart your shell."
+
 # Deploy CloudFormation infrastructure
 deploy-infra:
 	@echo "Deploying CloudFormation infrastructure..."
-	cd cloudformation && ./deploy.sh
+	cd infra/cloudformation && ./deploy.sh
 	@echo ""
 	@echo "Next steps:"
 	@echo "1. Set environment variables from output above"
@@ -53,8 +66,8 @@ test-memory:
 	export MEMORY_EXEC_ROLE_ARN=$(MEMORY_EXEC_ROLE_ARN) && \
 	export MEMORY_EVENTS_BUCKET=$$(aws cloudformation describe-stacks --stack-name userinfoagent-memory-infrastructure-02 --region us-east-1 --query 'Stacks[0].Outputs[?OutputKey==`MemoryEventsBucket`].OutputValue' --output text) && \
 	export MEMORY_EVENTS_TOPIC_ARN=$$(aws cloudformation describe-stacks --stack-name userinfoagent-memory-infrastructure-02 --region us-east-1 --query 'Stacks[0].Outputs[?OutputKey==`MemoryEventsTopicArn`].OutputValue' --output text) && \
-	MEMORY_ID=$$(python create_memory.py) && \
-	python test_memory.py $$MEMORY_ID user
+	MEMORY_ID=$$(python scripts/setup_memory.py) && \
+	python scripts/test_memory.py $$MEMORY_ID
 
 # Create self-managed memory
 create-memory:
@@ -62,7 +75,7 @@ create-memory:
 	export MEMORY_EVENTS_BUCKET=$$(aws cloudformation describe-stacks --stack-name userinfoagent-memory-infrastructure-02 --region us-east-1 --query 'Stacks[0].Outputs[?OutputKey==`MemoryEventsBucket`].OutputValue' --output text) && \
 	export MEMORY_EVENTS_TOPIC_ARN=$$(aws cloudformation describe-stacks --stack-name userinfoagent-memory-infrastructure-02 --region us-east-1 --query 'Stacks[0].Outputs[?OutputKey==`MemoryEventsTopicArn`].OutputValue' --output text) && \
 	echo "Creating self-managed memory..." && \
-	MEMORY_ID=$$(python create_memory.py) && \
+	MEMORY_ID=$$(python scripts/setup_memory.py) && \
 	echo "Memory ID: $$MEMORY_ID" && \
 	echo "✓ Memory ready" && \
 	echo "Run: make update-lambda MEMORY_ID=$$MEMORY_ID"
@@ -81,7 +94,7 @@ update-lambda-code:
 	export MEMORY_EXEC_ROLE_ARN=$(MEMORY_EXEC_ROLE_ARN) && \
 	export MEMORY_EVENTS_BUCKET=$$(aws cloudformation describe-stacks --stack-name userinfoagent-memory-infrastructure-02 --region us-east-1 --query 'Stacks[0].Outputs[?OutputKey==`MemoryEventsBucket`].OutputValue' --output text) && \
 	export MEMORY_EVENTS_TOPIC_ARN=$$(aws cloudformation describe-stacks --stack-name userinfoagent-memory-infrastructure-02 --region us-east-1 --query 'Stacks[0].Outputs[?OutputKey==`MemoryEventsTopicArn`].OutputValue' --output text) && \
-	MEMORY_ID=$$(python create_memory.py) && \
+	MEMORY_ID=$$(python scripts/setup_memory.py) && \
 	python update_lambda_minimal.py $$MEMORY_ID
 	@echo "✓ Lambda code updated successfully"
 

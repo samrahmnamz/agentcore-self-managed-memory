@@ -1,0 +1,4 @@
+# Ignore false positives for example ARNs and placeholder values
+arn:aws:iam::ACCOUNT_ID:role/
+arn:aws:iam::084375560447:role/
+UserInfoSelfManagedMemory-
