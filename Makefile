@@ -47,15 +47,6 @@ deploy-infra:
 	@echo "1. Set environment variables from output above"
 	@echo "2. Run: make create-memory"
 
-# # Get CloudFormation stack outputs and set environment variables
-# get-stack-outputs:
-# 	@echo "Getting CloudFormation stack outputs..."
-# 	$(eval BUCKET := $(shell aws cloudformation describe-stacks --stack-name userinfoagent-memory-infrastructure-02 --region us-east-1 --query 'Stacks[0].Outputs[?OutputKey==`MemoryEventsBucket`].OutputValue' --output text))
-# 	$(eval TOPIC_ARN := $(shell aws cloudformation describe-stacks --stack-name userinfoagent-memory-infrastructure-02 --region us-east-1 --query 'Stacks[0].Outputs[?OutputKey==`MemoryEventsTopicArn`].OutputValue' --output text))
-# 	@echo "MEMORY_EVENTS_BUCKET=$(BUCKET)"
-# 	@echo "MEMORY_EVENTS_TOPIC_ARN=$(TOPIC_ARN)"
-# 	@echo "✓ Environment variables retrieved"
-
 # List existing memories
 list-memories:
 	@python -c "import boto3; client = boto3.client('bedrock-agentcore-control', region_name='us-east-1'); memories = client.list_memories().get('memories', []); print(f'Found {len(memories)} memories:'); [print(f'ID: {m.get(\"id\", \"N/A\")}, Keys: {list(m.keys())}') for m in memories]"
@@ -80,12 +71,6 @@ create-memory:
 	echo "✓ Memory ready" && \
 	echo "Run: make update-lambda MEMORY_ID=$$MEMORY_ID"
 
-# # Update Lambda with memory ID
-# update-lambda:
-# 	@echo "Updating Lambda function..."
-# 	@test -n "$(MEMORY_ID)" || (echo "Error: MEMORY_ID not set. Usage: make update-lambda MEMORY_ID=<id>" && exit 1)
-# 	python update_lambda_simple.py $(MEMORY_ID)
-# 	@echo "✓ Lambda updated successfully"
 
 
 # Update Lambda function code
@@ -120,8 +105,6 @@ all: deploy-infra
 	@echo "1. Set the environment variables shown above"
 	@echo "2. Run: make create-memory"
 	@echo "3. Run: make update-lambda-code MEMORY_ID=<your-memory-id>"
-
-
 
 
 # Development target - start the agent
