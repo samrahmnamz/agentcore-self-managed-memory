@@ -115,13 +115,19 @@ make create-memory
 ```
 
 **What it does:**
-- Creates a self-managed memory resource in AgentCore
-- Configures trigger conditions (after 2 messages)
-- Links SNS topic and S3 bucket
-- Sets historical context window (20 messages)
+- Checks if a memory already exists (reuses existing if found)
+- Creates a self-managed memory resource in AgentCore if needed
+- Configures memory settings:
+  - **Trigger**: After 2 messages (`messageBasedTrigger`)
+  - **Context Window**: Last 20 messages (`historicalContextWindowSize`)
+  - **Event Expiry**: 30 days
+  - **SNS Topic**: Links to the topic created in Step 2
+  - **S3 Bucket**: Links to the bucket for payload storage
 - Saves Memory ID to `.memory_id` file for reuse
 
 **Output:** Memory ID is saved automatically (e.g., `UserInfoSelfManagedMemory-ABC123`)
+
+**Note:** The script (`scripts/setup_memory.py`) is idempotent - it will reuse an existing memory if one is found with the pattern `UserInfoSelfManagedMemory-*`
 
 ---
 
